@@ -1,7 +1,7 @@
 ---
 name: "phone-brand-guide"
 description: "Identifies phone brand (Xiaomi/vivo/Honor etc.) from user screenshots or text, returns GitHub/jsDelivr-hosted guide images, and answers offline/no-data troubleshooting questions. Invoke when user uploads phone screenshots, asks phone operation guides, or reports offline/no-data issues. MANDATORY RULE: BEFORE answering ANY user message, you MUST first run the version-check/self-update procedure at the top of this skill and switch to the remote version if it is newer; never wait for the user to ask about updates."
-version: "v7"
+version: "v8"
 ---
 
 # 手机品牌操作指引图片识别
@@ -47,6 +47,46 @@ version: "v7"
 - **在线状态识别**：识别到设备状态为绿色「在线」、橙黄色「在线」、红色「离线」之一，或用户询问状态含义 → 走「在线状态与图标识别」。
 - **灰色感叹号识别**：识别到【应在线】与灰色感叹号同时出现，或用户询问灰色感叹号含义 → 走「在线状态与图标识别」。
 
+### 选择对话框规范（用交互式选择，不要纯文本提问）
+
+当出现以下任一情况时，**必须使用交互式选择控件**（可点击按钮 / 单选卡片 / 下拉选项）让用户点选，**不要只用文字提问**，用户选择完成后再继续回答：
+
+- 系统无法确认（如华为分系统不明、鸿蒙版本不明）
+- 用户未说明具体要查询的操作类型
+- 用户表示不清楚（品牌 / 系统 / 操作都不确定）
+
+对话框按以下三组提供选项（系统已确认时，操作组只展示该系统支持的操作；系统未确认时列出全部常见操作）：
+
+**① 系统版本选项**
+- 鸿蒙（HarmonyOS 5.0 及以上）
+- 鸿蒙 4.2 及以下 / EMUI / MagicOS / 荣耀
+- 小米 / Redmi
+- vivo / iQOO
+- OPPO / 一加 / realme
+- iOS（苹果）
+- 我不清楚
+
+**② 操作类型选项**
+- 基础权限（权限 / 授权 / 允许）
+- 自启动
+- 后台运行 / 耗电 / 电池优化
+- 后台锁定
+- 省流量
+- 电池白名单（华为系）
+- 位置权限（鸿蒙 / iOS）
+- 运动与健身（iOS）
+- 后台App刷新（iOS）
+- 低电量模式（iOS）
+- 睡眠模式（vivo 老版本）
+- 应用速冻（OPPO 老机型）
+- 我不清楚
+
+**③ "不清楚"的指引**
+- 选择系统版本「我不清楚」→ 请用户上传「关于手机 / 关于本机」页面截图，或用对话框让其先选品牌；仍无法确认时按「未收录品牌兜底」提供小米完整操作指引作为参考。
+- 选择操作类型「我不清楚」→ 询问用户当前遇到的具体问题（收不到数据、离线、无法自启动等），按问题现象走「问题解答流程」；用户无具体问题时返回该品牌全部操作指引图。
+
+用户选择完成后，依据所选系统 + 操作继续走第一步～第三步（或对应流程）。
+
 ### 第一步：识别手机品牌与型号
 
 #### 图片识别
@@ -80,14 +120,14 @@ version: "v7"
 | apple、iphone、苹果、iOS | 苹果 | iOS | iOS：LocationPermission、MotionFitness、BackgroundRefresh、LowPowerMode |
 
 - 若能识别出具体型号（如「小米 14 Pro」「vivo X100」），记录型号用于回复展示；但指引图片按品牌粒度返回，不区分型号。
-- 华为分系统规则：识别到「鸿蒙 / HarmonyOS」→ 品牌文件前缀 `HarmonyOS`、操作类型为鸿蒙5项（LocationPermission、DeviceDiscovery、PowerSaving、BackgroundLock、Camera）；识别到「EMUI / MagicOS / Magic UI / 荣耀 / 安卓」→ 品牌文件前缀 `Huawei`、操作类型为华为系6项（BasicPermissions、Autostart、Background、BatteryWhitelist、BackgroundLock、DataSaver）；两者都出现或不确定时，向用户确认具体系统。
-- 鸿蒙版本询问规则：若设备为鸿蒙但版本不明，先询问用户鸿蒙版本号：4.2 及以下走 Android 表（华为系，品牌文件前缀 `Huawei`、操作类型为华为系6项），高于 4.2 走鸿蒙表（品牌文件前缀 `HarmonyOS`、操作类型为鸿蒙5项）。
+- 华为分系统规则：识别到「鸿蒙 / HarmonyOS」→ 品牌文件前缀 `HarmonyOS`、操作类型为鸿蒙5项（LocationPermission、DeviceDiscovery、PowerSaving、BackgroundLock、Camera）；识别到「EMUI / MagicOS / Magic UI / 荣耀 / 安卓」→ 品牌文件前缀 `Huawei`、操作类型为华为系6项（BasicPermissions、Autostart、Background、BatteryWhitelist、BackgroundLock、DataSaver）；两者都出现或不确定时，按「选择对话框规范」①系统版本选项让用户选择（含「我不清楚」选项），选择后再继续。
+- 鸿蒙版本询问规则：若设备为鸿蒙但版本不明，按「选择对话框规范」①系统版本选项让用户选择鸿蒙版本：4.2 及以下走 Android 表（华为系，品牌文件前缀 `Huawei`、操作类型为华为系6项），高于 4.2 走鸿蒙表（品牌文件前缀 `HarmonyOS`、操作类型为鸿蒙5项）；选择「我不清楚」时按③指引处理。
 
 ### 第二步：确定操作类型
 
 **先判断用户是否询问了具体操作：**
 
-- **未询问具体操作**：若用户仅提供了品牌/型号的文字或截图，没有说明要查什么指引，则基于第一步识别出的系统，向用户列出该系统支持的操作类型（见下方对应子表），主动询问「您需要哪个操作指引？」，等待用户明确后再继续第三步。
+- **未询问具体操作**：若用户仅提供了品牌/型号的文字或截图，没有说明要查什么指引，则按「选择对话框规范」②操作类型选项（含「我不清楚」选项）让用户点选需要指引的操作，等待选择后再继续第三步；系统也不确认时，①②两组选项同时给出。
 - **已询问具体操作**：从用户问题中提取操作关键词，按第一步识别出的系统选择对应子表，映射为 `operation_name`。
 
 > 不同系统支持的操作类型不同，按第一步识别出的系统选择对应子表：
