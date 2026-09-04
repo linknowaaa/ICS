@@ -2,7 +2,7 @@
 
 name: "phone-brand-guide"
 description: "Identifies phone brand (Xiaomi/vivo/Honor etc.) from user screenshots or text, returns GitHub/jsDelivr-hosted guide images, and answers offline/no-data troubleshooting questions. Invoke when user uploads phone screenshots, asks phone operation guides, or reports offline/no-data issues. MANDATORY RULE: BEFORE answering ANY user message, you MUST first run the version-check/self-update procedure at the top of this skill and switch to the remote version if it is newer; never wait for the user to ask about updates."
-version: "1.0.12"
+version: "1.0.13"
 -----------------
 
 # 手机品牌操作指引图片识别
@@ -62,11 +62,24 @@ version: "1.0.12"
 
 - **灰色感叹号识别**：识别到【应在线】与灰色感叹号同时出现，或用户询问灰色感叹号含义 → 走「在线状态与图标识别」。
 
-### 选择对话框规范（用交互式选择，不要纯文本提问）
+### 选择对话框规范（先选定再回答，禁止跳选直出）
 
-> **环境适配（重要）**：本技能在支持交互控件的环境（如 TRAE 桌面端）下，以下对话框均以可点击按钮 / 单选卡片 / 下拉选项呈现。在 **WorkBuddy、Kimi 等移动端纯文本环境（无法渲染按钮/卡片/下拉控件）下，模型**不得因弹不出可视化控件就跳过选择、擅自直接返回该品牌全部指引；应改为输出**编号文字选项**（如「① 基础权限　② 自启动　③ 后台运行　④ 后台锁定　⑤ 省流量　⑥ 我不清楚」），请用户回复序号或关键词，等用户回复后再继续；用户明确表示「全部都要」或仍回复「我不清楚」时，才返回该品牌全部指引或按下方③兜底处理。
+> **【强制规则·违反即视为执行失败】** 凡是需要用户选择的地方，**必须先让用户选定，再继续输出指引**。**禁止**以任何理由跳过选择：禁止因"用户说得笼统、没说细项"就直接返回该品牌全部指引；禁止在华为系系统不明时默认按 EMUI/MagicOS/荣耀（或默认鸿蒙）直接给出整套配置。以下三种必须选择的情形，每次命中都必须先问、停下等待回复。
+>
+> **环境适配（按当前环境二选一执行）**：
+>
+> - **支持交互控件的环境（TRAE 桌面端等）**：用可点击按钮 / 单选卡片 / 下拉选项让用户点选。
+>
+> - **WorkBuddy、Kimi 等纯文本移动端（无控件可渲染）**：改用**编号文字选项**并停下等回复。统一输出格式（系统已确认时只列该系统支持的操作，并附「全部都要」「我不清楚」）：
+>
+>   「请选择需要哪一项的操作指引：① 基础权限　② 自启动　③ 后台运行/耗电　④ 后台锁定　⑤ 省流量　⑥ 全部都要　⑦ 我不清楚（也可先描述现象帮你排查）→ 请回复序号或关键词。」
+>
+> **只有以下两种情形才允许直接返回该品牌全部指引，其余必须先问：**
+>
+> 1. 用户明确回复「全部都要 / 都要 / 全都要」或对应编号；
+> 2. 用户已选「我不清楚」且说不出具体问题时，走下方③兜底。
 
-当出现以下任一情况时，**必须使用交互式选择控件**（可点击按钮 / 单选卡片 / 下拉选项）让用户点选，**不要只用文字提问**，用户选择完成后再继续回答：
+当出现以下任一情况时，**必须让用户选择**（控件或编号文字选项），**不得直接跳过、不得默认猜测后直接给出**，用户选定后再继续回答：
 
 - 系统无法确认（如华为分系统不明、鸿蒙版本不明）
 
