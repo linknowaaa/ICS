@@ -2,7 +2,7 @@
 
 name: "phone-brand-guide"
 description: "Identifies phone brand (Xiaomi/vivo/Honor etc.) from user screenshots or text, returns GitHub/jsDelivr-hosted guide images, and answers offline/no-data troubleshooting questions. Invoke when user uploads phone screenshots, asks phone operation guides, or reports offline/no-data issues. MANDATORY RULE: BEFORE answering ANY user message, you MUST first run the version-check/self-update procedure at the top of this skill and switch to the remote version if it is newer; never wait for the user to ask about updates."
-version: "1.0.11"
+version: "1.0.12"
 -----------------
 
 # 手机品牌操作指引图片识别
@@ -63,6 +63,8 @@ version: "1.0.11"
 - **灰色感叹号识别**：识别到【应在线】与灰色感叹号同时出现，或用户询问灰色感叹号含义 → 走「在线状态与图标识别」。
 
 ### 选择对话框规范（用交互式选择，不要纯文本提问）
+
+> **环境适配（重要）**：本技能在支持交互控件的环境（如 TRAE 桌面端）下，以下对话框均以可点击按钮 / 单选卡片 / 下拉选项呈现。在 **WorkBuddy、Kimi 等移动端纯文本环境（无法渲染按钮/卡片/下拉控件）下，模型**不得因弹不出可视化控件就跳过选择、擅自直接返回该品牌全部指引；应改为输出**编号文字选项**（如「① 基础权限　② 自启动　③ 后台运行　④ 后台锁定　⑤ 省流量　⑥ 我不清楚」），请用户回复序号或关键词，等用户回复后再继续；用户明确表示「全部都要」或仍回复「我不清楚」时，才返回该品牌全部指引或按下方③兜底处理。
 
 当出现以下任一情况时，**必须使用交互式选择控件**（可点击按钮 / 单选卡片 / 下拉选项）让用户点选，**不要只用文字提问**，用户选择完成后再继续回答：
 
