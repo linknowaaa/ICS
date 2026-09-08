@@ -1,8 +1,8 @@
 ---
 
 name: "phone-brand-guide"
-description: "Identifies phone brand (Xiaomi/vivo/Honor etc.) from user screenshots or text, returns GitHub/jsDelivr-hosted guide images, and answers offline/no-data troubleshooting questions. Invoke when user uploads phone screenshots, asks phone operation guides, or reports offline/no-data issues. MANDATORY RULE: BEFORE answering ANY user message, you MUST first run the version-check/self-update procedure at the top of this skill and switch to the remote version if it is newer; never wait for the user to ask about updates."
-version: "1.0.17"
+description: "Identifies phone brand (Xiaomi/vivo/Honor etc.) from user screenshots or text, returns GitHub/jsDelivr-hosted guide images, and answers offline/no-data troubleshooting questions. Invoke when user uploads phone screenshots, asks phone operation guides, or reports offline/no-data issues. MANDATORY RULE: on the first message of each conversation/session each day you MUST first run the version-check/self-update procedure at the top of this skill (skip re-checking on later messages the same day unless the date changes), and switch to the remote version if it is newer; never wait for the user to ask about updates."
+version: "1.0.19"
 ---
 
 # 手机品牌操作指引图片识别
@@ -27,13 +27,14 @@ version: "1.0.17"
 
 ## 执行流程
 
-### 自我更新检查（最高优先级强制步骤，每次用户提问前必须执行）
+### 自我更新检查（最高优先级强制步骤，每天首次对话时检查一次）
 
-> **【强制规则·违反即视为执行失败】** 每次收到用户新消息后、回答任何内容之前，**必须无条件先执行本检查**。本检查独立于用户的提问内容——用户没有提到"版本/更新"也必须执行；如果用户需要手动提醒才会触发检查，即视为本技能执行失败。禁止跳过、禁止延后、禁止因"问题简单/网络麻烦/刚查过"而省略，也不得只在会话开始时查一次后就不再查。
+> **【强制规则·违反即视为执行失败】** 每次开启一段新对话（会话起点）后、回答用户第一个问题之前，**必须执行一次本检查**；**同一自然日（当天）内若已在会话中检查过且无需更新，则同一会话后续消息不再重复检查**。本检查独立于用户的提问内容——用户没有提到"版本/更新"也必须在每天首次对话时执行；**当天已检查过、且该次检查无需更新时，禁止同一会话内反复拉取**（避免每条消息都白白等待）。仅在自然日变更（跨天）、新开一段对话、或用户主动要求检查/更新时才再次执行。如果用户需要手动提醒才触发检查，即视为本技能执行失败。
 
-本检查在**每次收到用户新消息时都执行一次**（而非仅会话开始时），确保每次回答前都使用最新版本逻辑。
+本检查的时机：**每天首次对话时执行一次（而非每次用户提问都执行）**。实现方式按环境分：
 
-本技能支持两种环境的自我更新：可读写本地文件的环境（如 TRAE、具备写权限的沙箱如 CodeBuddy，写入文件持久化同步），以及 WorkBuddy、Kimi 等移动端纯提示词环境（本次对话直接按远程最新版执行，无需写入文件）。
+- **可读写本地文件的环境（TRAE、具备写权限的沙箱如 CodeBuddy）**：检查前先看缓存目录是否已有**当天日期标记文件** `{当前工作目录}/.cache/phone-brand-guide/.version_check_YYYY-MM-DD`（`YYYY-MM-DD` 取当天日期）。存在 → 当天已检查过，**直接跳过本次检查**，按已确认版本继续；不存在 → 执行一次检查，完成后写入该日期标记文件。跨天（日期变化）时旧标记失效，需重新检查并覆盖标记。
+- **WorkBuddy、Kimi 等移动端环境**：**同样使用当天日期标记文件** `{当前工作目录}/.cache/phone-brand-guide/.version_check_YYYY-MM-DD` 作为权威判断——当天已有标记 → **直接跳过本次检查**；没有 → 执行一次检查并写入标记；跨天旧标记失效、重新检查并覆盖。**若该环境确实无法写入标记文件（纯提示词、写失败），才降级为「每个会话开始时检查一次」**：同一会话内后续消息不再重复检查，新开一段对话（或跨天、担心缓存旧内容时）再检查一次。
 
 1. **获取远程最新内容**：**唯一来源使用 jsDelivr** `https://cdn.jsdelivr.net/gh/linknowaaa/ICS@main/SKILL.md`（**不再访问 `raw.githubusercontent.com`**——该域在很多环境被拦截，先访问它会白白等待超时，是主要卡顿来源）。jsDelivr 缓存最长 24 小时，若怀疑拿到旧内容，先访问 `https://purge.jsdelivr.net/gh/linknowaaa/ICS@main/SKILL.md` 刷新缓存后**重试一次**即可。获取失败或**超过短超时（约 2 秒）立即跳过更新**，按当前版本继续，**不做多次重试、不长时间等待**。
 2. **比对版本（语义化版本比较）**：将远程 frontmatter 中的 `version` 字段与当前技能 frontmatter 的 `version` 字段做版本比较。支持两种写法：**语义化版本** **`x.y.z`**（如 `1.0.11`，可带前导 `v` 如 `v1.0.11`）与**旧式整型版本** **`vN`**（如 `v8`/`8`）。解析与比较规则：先去掉前导 `v`/`V`；按 `.` 分段、每段取纯数字；旧式整型版本视为单段（`v8` → `[8]`）；将两边都归一化为整数段数组后**逐段按数值比大小**，段数不足的高位补 0（如 `1.0.11` vs `1.0.9` → 第 3 段 11 > 9，判定 `1.0.11` 更新；若用字典序会把 `1.0.9` 误判为新版，必须逐段数值比较）。任一方无法解析（无 `version`、空值、段内含非数字）时，无法可靠判断则**保守跳过更新并提示人工核对版本号**。比较结果处理：
