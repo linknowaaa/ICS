@@ -2,7 +2,7 @@
 
 name: "phone-brand-guide"
 description: "Identifies phone brand (Xiaomi/vivo/Honor etc.) from user screenshots or text, returns GitHub/jsDelivr-hosted guide images, and answers offline/no-data troubleshooting questions. Invoke when user uploads phone screenshots, asks phone operation guides, or reports offline/no-data issues. MANDATORY RULE: BEFORE answering ANY user message, you MUST first run the version-check/self-update procedure at the top of this skill and switch to the remote version if it is newer; never wait for the user to ask about updates."
-version: "1.0.16"
+version: "1.0.17"
 ---
 
 # 手机品牌操作指引图片识别
@@ -276,11 +276,11 @@ version: "1.0.16"
 {按品牌输出对应的「品牌文字操作指引」内容，见下方小节}
 ```
 
-> **图片输出策略（按环境决定是否缓存 + 始终返回 CDN 链接）**：本技能返回的所有指引图片均执行以下策略：
+> **图片输出策略（下载图片确保渲染 + 始终返回 CDN 链接）**：本技能返回的所有指引图片均执行以下策略：
 >
-> 1. **沙箱缓存（仅支持本地文件渲染的环境）**：只有环境通过读取本地文件渲染图片（如 TRAE 桌面端）时才下载：用下载工具把图片从 jsDelivr CDN 下载到沙箱缓存目录 `{当前工作目录}/.cache/phone-brand-guide/`（目录不存在则创建，文件名与仓库保持一致），成功后可在回复中标注缓存路径，便于直接展示缓存图；下载失败则跳过本步，不影响使用。
-> 2. **移动端 / 纯链接环境（WorkBuddy、Kimi 等）跳过下载**：用户端只通过点击 CDN 链接查看图片、不读取本地缓存，因此**不执行任何下载/校验**，直接返回 CDN 链接即可，省去每条消息的图片下载等待。
-> 3. **始终返回 CDN 链接**：回复正文中的图片地址始终使用 jsDelivr CDN 链接（`https://cdn.jsdelivr.net/gh/linknowaaa/ICS@main/文件名`），确保所有端都能点击查看。
+> 1. **下载到沙箱缓存（所有需要渲染图片的端，含 WorkBuddy、TRAE 桌面端）**：用下载工具把图片从 jsDelivr CDN 下载到沙箱缓存目录 `{当前工作目录}/.cache/phone-brand-guide/`（目录不存在则创建，文件名与仓库保持一致）。下载成功后，回复正文用**本地缓存图方式展示，让 WorkBuddy、TRAE 等都能渲染出图片**，并同时标注缓存路径；下载失败则跳过本步、改用 CDN 链接，不影响使用。
+> 2. **始终返回 CDN 链接作为兜底**：回复正文中的图片地址同时提供 jsDelivr CDN 链接（`https://cdn.jsdelivr.net/gh/linknowaaa/ICS@main/文件名`），确保即使缓存未命中/跨端不同步时仍可点击查看。
+> 3. **仅极少数确实无法渲染图片的纯文本环境（指既不能引用本地缓存、也无法内嵌图片的对话）跳过下载**：此时直接用 CDN 链接，不强求渲染。
 > 4. 该策略适用于所有返回图片的场景：操作指引图、在线/离线状态图（`OnlineDetails.jpg`）、更新提示图（`Update.jpg`）、未收录品牌兜底的小米指引图。
 
 ### 品牌文字操作指引
